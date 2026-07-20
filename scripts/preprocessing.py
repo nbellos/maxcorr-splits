@@ -2,11 +2,10 @@ import numpy as np
 import pandas as pd
 
 def load_returns(path: str, data_type: str = "prices", min_obs: int = 250) -> pd.DataFrame:
-
     df = pd.read_csv(path, parse_dates=[0], index_col=0).sort_index()
     df = df.dropna(axis=1, thresh=min_obs)
     if data_type == "prices":
-        df = df.where(df > 0)
+        df = df.where(df > 0)          
         df = np.log(df).diff()
     df = df.dropna(how="all").ffill(limit=2).dropna()
     return df
@@ -21,26 +20,24 @@ def vol_normalize(X_train: np.ndarray, X_valid: np.ndarray) -> tuple[np.ndarray,
     return X_train / sd, X_valid / sd
 
 def residualize_market(X: np.ndarray) -> np.ndarray:
-
     Xc = X - X.mean(axis=0)
     C = np.corrcoef(Xc, rowvar=False)
     w = np.linalg.eigh(C)[1][:, -1]
-    f = Xc @ w
+    f = Xc @ w                          
     beta = (Xc.T @ f) / (f @ f)
     return Xc - np.outer(f, beta)
 
 def estimate_C(X_train: np.ndarray, method: str = "sample") -> np.ndarray:
-
     C = np.corrcoef(X_train, rowvar=False)
     if method == "sample":
         return C
     if method == "mp_clip":
         T, n = X_train.shape
-        lam_max = (1 + np.sqrt( n / T) ** 2)
-        vals, vecs = np.linalg.eight(C)
+        lam_max = (1 + np.sqrt(n / T)) ** 2
+        vals, vecs = np.linalg.eigh(C)
         noise = vals < lam_max
         if noise.any():
-            vals[noise] = vals[noise].mean()
+            vals[noise] = vals[noise].mean()   
         C = (vecs * vals) @ vecs.T
         d = np.sqrt(np.diag(C))
         C = C / np.outer(d, d)
@@ -51,4 +48,4 @@ def estimate_C(X_train: np.ndarray, method: str = "sample") -> np.ndarray:
         S, _ = ledoit_wolf(X_train)
         d = np.sqrt(np.diag(S))
         return S / np.outer(d, d)
-    raise ValueError(f"uknown corr_method:{method}")
+    raise ValueError(f"unknown corr_method: {method}")

@@ -1,0 +1,4 @@
+data_path: data/data_prices.csv
+data_type: prices
+min_obs: 250 #drop assets with fewer observations
+train_fraction: 0.75

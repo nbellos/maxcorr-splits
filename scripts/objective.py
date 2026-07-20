@@ -36,3 +36,19 @@ def basket_correlation(X: np.ndarray, s: np.ndarray) -> float:
     a = X[:, s > 0].sum(axis=1)
     b = X[:, s < 0].sum(axis=1)
     return float(np.corrcoef(a, b)[0, 1])
+
+def rho_exact_batch(X: np.ndarray, S: np.ndarray, pstats: dict | None = None) -> np.ndarray:
+
+    if pstats is None:
+        pstats = precompute_P(X)
+    D = X @ S
+    D0 = D - D.mean(axis=0, keepdims=True)
+    T = D0.shape[0]
+    v = np.einsum("tm,tm->m",D0,D0) / T
+    u = (pstats["P0"] @ D0) / T
+    q = pstats["q"]
+    denom_sq = (q+v) ** 2 - 4.0 * u * u
+    out = np.full(S.shape[1], -1.0)
+    ok = denom_sq > 1e-18
+    out[ok] = (q - v[ok]) / np.sqrt(denom_sq[ok])
+    return out

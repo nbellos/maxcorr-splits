@@ -7,3 +7,5 @@ n_eigenspace_starts: 10
 kl_max_passes: 60
 beam: {H: 5, K: 2, B: 3}
 use_beam: true
+library_target: 10
+max_overlap: 0.6

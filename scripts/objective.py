@@ -22,7 +22,7 @@ def rho_exact_from_D(D: np.ndarray, pstats: dict) -> float:
     v = float(D0 @ D0 / T)
     u = float(pstats["P0"] @ D0 / T)
     q = pstats["q"]
-    denom_sq = (q+v ** 2 - 4.0 * u * u)
+    denom_sq = (q + v) ** 2 - 4.0 * u * u
     if denom_sq <= 1e-18:
         return -1.0
     return (q-v) / np.sqrt(denom_sq)

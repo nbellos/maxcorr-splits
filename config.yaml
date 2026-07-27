@@ -1,7 +1,9 @@
+seed: 42
 data_path: data/data_prices.csv
 data_type: prices
 min_obs: 250
 train_fraction: 0.75
+corr_method: sample
 n_random_starts: 20
 n_eigenspace_starts: 10
 kl_max_passes: 60

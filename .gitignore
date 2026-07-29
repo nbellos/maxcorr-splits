@@ -1,5 +1,6 @@
 data/
 *.csv
 *.npy
+*.png
 __pycache__/
 *.pyc

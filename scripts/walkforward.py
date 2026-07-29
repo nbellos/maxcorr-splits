@@ -2,6 +2,7 @@ import numpy as np
 
 from objective import precompute_P, rho_exact, rho_exact_batch
 from solvers import kl_refine, random_balanced, spectral_split
+from extra_nulls import extra_nulls as compute_extra_nulls
 
 
 def yearly_blocks(index):
@@ -49,7 +50,7 @@ def run_walkforward(df, cfg, rng):
         z = (rho_next - mu) / sd_null if sd_null > 0 else np.nan
         pct = float((null < rho_next).mean())
 
-        rows.append({
+        row = {
             "train_year": lab_prev,
             "test_year": lab_next,
             "rho_train": rho_in,
@@ -58,7 +59,14 @@ def run_walkforward(df, cfg, rng):
             "null_sd": sd_null,
             "z": z,
             "percentile": pct,
-        })
+        }
+        if cfg.get("extra_nulls", False):
+            block_len = cfg.get("block_len", 21)
+            for null_name, null_vals in compute_extra_nulls(Xn, s_opt, n_mc, block_len, rng).items():
+                nm, nsd = float(null_vals.mean()), float(null_vals.std(ddof=1))
+                row[f"{null_name}_z"] = (rho_next - nm) / nsd if nsd > 0 else np.nan
+                row[f"{null_name}_percentile"] = float((null_vals < rho_next).mean())
+        rows.append(row)
         zs.append(z)
         last = (lab_next, null, rho_next)
 

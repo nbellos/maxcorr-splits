@@ -27,14 +27,21 @@ def _projected(C):
     return P @ C @ P
 
 
+def _first_nontrivial(vals):
+    tol = 1e-8 * vals.max()
+    return int(np.argmax(vals > tol))
+
+
 def spectral_split(C):
-    _, vecs = np.linalg.eigh(_projected(C))
-    return _median_balance(vecs[:, 0])
+    vals, vecs = np.linalg.eigh(_projected(C))
+    idx = _first_nontrivial(vals)
+    return _median_balance(vecs[:, idx])
 
 
 def bottom_eigenspace_starts(C, n_starts, k, rng):
-    _, vecs = np.linalg.eigh(_projected(C))
-    basis = vecs[:, :k]
+    vals, vecs = np.linalg.eigh(_projected(C))
+    start = _first_nontrivial(vals)
+    basis = vecs[:, start:start + k]
     return [_median_balance(basis @ rng.standard_normal(k)) for _ in range(n_starts)]
 
 

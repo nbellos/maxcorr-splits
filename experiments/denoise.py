@@ -12,7 +12,6 @@ from split_library import build_library
 
 def main():
     cfg = yaml.safe_load(open("config.yaml"))
-    rng = np.random.default_rng(cfg["seed"])
     df = load_returns(cfg["data_path"], cfg["data_type"], cfg["min_obs"])
     X = df.to_numpy()
     X_tr, X_va = chrono_split(X, cfg["train_fraction"])
@@ -30,7 +29,7 @@ def main():
     rows = []
     for method in ("sample", "mp_clip", "ledoit_wolf"):
         C = estimate_C(X_tr, method)
-        library, _ = build_library(X_tr, X_va, C, cfg, rng)
+        library, _ = build_library(X_tr, X_va, C, cfg, np.random.default_rng(cfg["seed"]))
         best = library[0]
         s = best["s"]
         overlap = float(abs(int(s @ s_sample))) / n if s_sample is not None else 1.0

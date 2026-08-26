@@ -71,8 +71,11 @@ def run_walkforward(df, cfg, rng):
         last = (lab_next, null, rho_next)
 
     zs = np.array(zs)
+    pcts = np.array([r["percentile"] for r in rows])
     summary = {
         "n_years": len(zs),
+        "years_above_95": int((pcts >= 0.95).sum()),
+        "min_percentile": float(pcts.min()),
         "mean_z": float(zs.mean()),
         "years_above_2": int((zs > 2).sum()),
         "stouffer_Z": float(zs.sum() / np.sqrt(len(zs))),

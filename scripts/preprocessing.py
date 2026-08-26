@@ -19,13 +19,19 @@ def vol_normalize(X_train: np.ndarray, X_valid: np.ndarray) -> tuple[np.ndarray,
     sd[sd == 0] = 1.0
     return X_train / sd, X_valid / sd
 
-def residualize_market(X: np.ndarray) -> np.ndarray:
-    Xc = X - X.mean(axis=0)
-    C = np.corrcoef(Xc, rowvar=False)
+def residualize_market(X_train: np.ndarray, X_valid: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    mean = X_train.mean(axis=0)
+    Xc_train = X_train - mean
+    C = np.corrcoef(Xc_train, rowvar=False)
     w = np.linalg.eigh(C)[1][:, -1]
-    f = Xc @ w                          
-    beta = (Xc.T @ f) / (f @ f)
-    return Xc - np.outer(f, beta)
+    f_train = Xc_train @ w
+    beta = (Xc_train.T @ f_train) / (f_train @ f_train)
+    resid_train = Xc_train - np.outer(f_train, beta)
+
+    Xc_valid = X_valid - mean
+    f_valid = Xc_valid @ w
+    resid_valid = Xc_valid - np.outer(f_valid, beta)
+    return resid_train, resid_valid
 
 def estimate_C(X_train: np.ndarray, method: str = "sample") -> np.ndarray:
     C = np.corrcoef(X_train, rowvar=False)

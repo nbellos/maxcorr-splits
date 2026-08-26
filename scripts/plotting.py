@@ -6,22 +6,23 @@ import numpy as np
 
 def plot_walkforward_persistence(rows, summary, path):
     labels = [f"{r['train_year']}\n->{r['test_year']}" for r in rows]
-    z = np.array([r["z"] for r in rows])
-    colors = ["#2a9d5b" if zi > 2 else ("#e07b39" if zi > 0 else "#c0392b") for zi in z]
+    pct = np.array([r["percentile"] for r in rows])
+    colors = ["#2a9d5b" if p >= 0.95 else "#c0392b" for p in pct]
+    n_clear = int((pct >= 0.95).sum())
 
     fig, ax = plt.subplots(figsize=(max(8, 0.5 * len(rows)), 4.5))
-    ax.bar(range(len(z)), z, color=colors)
-    ax.axhline(2.0, color="black", linestyle="--", linewidth=1, label="z = 2 (significance)")
-    ax.axhline(0.0, color="gray", linestyle="-", linewidth=0.8)
+    ax.bar(range(len(pct)), pct, color=colors)
+    ax.axhline(0.95, color="black", linestyle="--", linewidth=1, label="95th percentile")
     ax.set_xticks(range(len(labels)))
     ax.set_xticklabels(labels, fontsize=7)
-    ax.set_ylabel("z-score (realized vs. random-split null)")
+    ax.set_ylim(min(0.9, pct.min() - 0.02), 1.001)
+    ax.set_ylabel("percentile of frozen split in that year's random-split null")
     ax.set_title(
         f"Walk-forward correlation persistence  "
-        f"(mean z={summary['mean_z']:+.2f}, Stouffer Z={summary['stouffer_Z']:+.2f}, "
-        f"{summary['years_above_2']}/{summary['n_years']} years z>2)"
+        f"({n_clear}/{summary['n_years']} years above the 95th percentile, "
+        f"worst year {pct.min():.3f})"
     )
-    ax.legend(loc="upper right", fontsize=8)
+    ax.legend(loc="lower left", fontsize=8)
     fig.tight_layout()
     fig.savefig(path, dpi=150)
     plt.close(fig)

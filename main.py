@@ -11,7 +11,7 @@ from split_library import build_library
 from clustering import validate_split
 from consensus import consensus_over_library
 from walkforward import run_walkforward
-from objective import precompute_P, rho_exact, surrogate
+from objective import precompute_P, rho_exact, surrogate, check_balanced
 from plotting import plot_walkforward_persistence, plot_correlation_heatmap
 from cluster_null import cluster_null_scores
 
@@ -63,9 +63,10 @@ def main():
     rows, zs, summary, last = run_walkforward(df, cfg, rng)
     wf = pd.DataFrame(rows)
     print(wf.round(4).to_string(index=False))
-    print(f"\nyears={summary['n_years']}  mean_z={summary['mean_z']:+.2f}  "
-          f"z>2: {summary['years_above_2']}/{summary['n_years']}  "
-          f"stouffer_Z={summary['stouffer_Z']:+.2f}")
+    print(f"\nyears={summary['n_years']}  "
+          f"above 95th pct: {summary['years_above_95']}/{summary['n_years']}  "
+          f"worst percentile={summary['min_percentile']:.3f}  "
+          f"(mean_z={summary['mean_z']:+.2f}, stouffer_Z={summary['stouffer_Z']:+.2f})")
     wf[WF_BASE_COLS].to_csv("results/tables/walkforward.csv", index=False)
     if cfg.get("extra_nulls", False):
         wf.to_csv("results/tables/walkforward_extra_nulls.csv", index=False)
@@ -77,7 +78,7 @@ def main():
     X_tr, X_va = chrono_split(X, cfg["train_fraction"])
     X_tr, X_va = vol_normalize(X_tr, X_va)
     if cfg.get("residualize_market", False):
-        X_tr, X_va = residualize_market(X_tr), residualize_market(X_va)
+        X_tr, X_va = residualize_market(X_tr, X_va)
     C = estimate_C(X_tr, cfg["corr_method"])
 
     if cfg.get("solver_method", "kl") == "sb" and cfg.get("sb", {}).get("enabled", False):
@@ -105,6 +106,7 @@ def main():
     lib.to_csv("results/tables/library.csv", index=False)
 
     best = library[0]
+    check_balanced(best["s"])
     green = [names[i] for i in np.where(best["s"] == 1)[0]]
     red = [names[i] for i in np.where(best["s"] == -1)[0]]
     print(f"\nbest split  rho_train={best['rho_train']:.4f}  rho_valid={best['rho_valid']:.4f}")
